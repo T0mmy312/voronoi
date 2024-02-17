@@ -7,73 +7,11 @@
 #include <vector>
 #include <math.h>
 #include <random>
+#include "vectors.h"
 #ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #endif
-
-//? ----------------------------------------------------------------------------------------------------
-//? Sinple math funktions
-//? ----------------------------------------------------------------------------------------------------
-
-float sq(float x) {
-    return x*x;
-}
-
-float clamp(float x, float min, float max) {
-    if (x < min)
-        return min;
-    if (x > max)
-        return max;
-    return x;
-}
-
-float max(float val1, float val2) {
-    if (val1 >= val2)
-        return val1;
-    return val2;
-}
-
-//? ----------------------------------------------------------------------------------------------------
-//? Vector2 class
-//? ----------------------------------------------------------------------------------------------------
-
-class Vector2 
-{
-public:
-    Vector2(float _x = 0, float _y = 0) {
-        x = _x;
-        y = _y;
-    }
-    ~Vector2() {}
-
-    float x;
-    float y;
-
-    float magnitude() {
-        return sqrt(x*x + y*y);
-    }
-    Vector2 unitVec() {
-        float mag = magnitude();
-        return Vector2(x / mag, y / mag);
-    }
-
-    Vector2 operator+(Vector2 other) {
-        return Vector2(x + other.x, y + other.y);
-    }
-    Vector2 operator-(Vector2 other) {
-        return Vector2(x - other.x, y - other.y);
-    }
-    float operator*(Vector2 other) {
-        return x * other.x + y * other.y;
-    }
-    Vector2 operator*(float other) {
-        return Vector2(x * other, y * other);
-    }
-    Vector2 operator/(float other) {
-        return Vector2(x / other, y / other);
-    }
-};
 
 //? ----------------------------------------------------------------------------------------------------
 //? Distance calculation funktions
@@ -174,6 +112,7 @@ public:
     }
 };
 
+//! may not work, not yet tested
 doublei intersect(Parabular p1, Parabular p2) {
     float twoA = 2 * (p1.a - p2.a);
     if (twoA == 0)
@@ -188,6 +127,22 @@ doublei intersect(Parabular p1, Parabular p2) {
     float x1 = (-(p1.b - p2.b) + sqrt(sqrtCon)) / twoA;
     float x2 = (-(p1.b - p2.b) - sqrt(sqrtCon)) / twoA;
     return doublei(intersection(Vector2(x1, p1.calc(x1)), true), intersection(Vector2(x2, p1.calc(x2)), true));
+}
+
+std::vector<int> parMin(std::vector<Parabular> pars, int xStart, int xEnd) { // [xStart, xEnd)
+    std::vector<int> ret = {};
+    if (pars.empty())
+        return {};
+    for (int x = xStart; x < xEnd; x++) {
+        int min = (int)pars[0].calc(x);
+        for(int i = 1; i < pars.size(); i++) {
+            int val = (int)pars[i].calc(x);
+            if (val < min)
+                min = val;
+        }
+        ret.push_back(min);
+    }
+    return ret;
 }
 
 //? ----------------------------------------------------------------------------------------------------
@@ -213,6 +168,9 @@ public:
     }
     Color operator+(Color other) {
         return Color(clamp(r + other.r, 0, 255), clamp(g + other.g, 0, 255), clamp(b + other.b, 0, 255));
+    }
+    Color operator*(float other) {
+        return Color(clamp(r * other, 0, 255), clamp(g * other, 0, 255), clamp(b * other, 0, 255));
     }
 };
 
@@ -251,10 +209,10 @@ void fillColor(char picture[], int width, int height, Color color) {
 }
 
 bool surroundEq(char picture[], int x, int y, int width, int height, Color currColor) {
-    bool rightEdge = x == width;
+    bool rightEdge = x == width - 1;
     bool leftEdge = x == 0;
     bool topEdge = y == 0;
-    bool bottomEdge = y == height;
+    bool bottomEdge = y == height - 1;
     return  (!topEdge ? (getColor(picture, x, y - 1, width) == currColor) : true) && 
             (!rightEdge && !topEdge ? (getColor(picture, x + 1, y - 1, width) == currColor) : true) && 
             (!rightEdge  ? (getColor(picture, x + 1, y, width) == currColor) : true) &&
@@ -297,6 +255,7 @@ std::vector<Vector2> generateRandPoints(int width, int height, int amount, int m
     return points;
 }
 
+//! isn't working properly
 std::vector<Vector2> wrapPoints(std::vector<Vector2> seeds, int width, int height) 
 {
     std::vector<Vector2> points = {};
@@ -334,9 +293,9 @@ std::vector<Edge> voronoi(std::vector<Vector2> seeds, Vector2 topLeft, Vector2 b
 */
 
 // this is an stb_image_write picture (rgb)
-int voronoiBW(char picture[], int pictureWidth, int pictureHeight, std::vector<Vector2> seeds, Vector2 topLeft, Vector2 bottomRight) // black white picture of the voronoi diagram
+int voronoiBW(char picture[], int pictureWidth, int pictureHeight, std::vector<Vector2> seeds, Vector2 topLeft, Vector2 bottomRight, Color lineColor = Color(0, 0, 0), Color backgroundColor = Color(255, 255, 255)) // black white picture of the voronoi diagram
 {
-    fillColor(picture, pictureWidth, pictureHeight, Color(255, 255, 255));
+    fillColor(picture, pictureWidth, pictureHeight, backgroundColor);
     std::vector<Parabular> pars = {}; // list of parabulars
     for (int sweepY = topLeft.y; sweepY <= bottomRight.y; sweepY++) {
         pars.clear();
@@ -353,20 +312,50 @@ int voronoiBW(char picture[], int pictureWidth, int pictureHeight, std::vector<V
                 if (intersections.i1.valid) {
                     if (intersections.i1.point.y > 0 && intersections.i1.point.y < pictureHeight &&
                         intersections.i1.point.x > 0 && intersections.i1.point.x < pictureWidth) {
-                        picture[((int)intersections.i1.point.y) * pictureWidth * 3 + ((int)intersections.i1.point.x) * 3] = 0;
-                        picture[((int)intersections.i1.point.y) * pictureWidth * 3 + ((int)intersections.i1.point.x) * 3 + 1] = 0;
-                        picture[((int)intersections.i1.point.y) * pictureWidth * 3 + ((int)intersections.i1.point.x) * 3 + 2] = 0;
+                        setColor(picture, (int)intersections.i1.point.x, (int)intersections.i1.point.y, pictureWidth, lineColor);
                     }
                 }
                 if (intersections.i2.valid) {
                     if (intersections.i2.point.y > 0 && intersections.i2.point.y < pictureHeight &&
                         intersections.i2.point.x > 0 && intersections.i2.point.x < pictureWidth) {
-                        picture[((int)intersections.i2.point.y) * pictureWidth * 3 + ((int)intersections.i2.point.x) * 3] = 0;
-                        picture[((int)intersections.i2.point.y) * pictureWidth * 3 + ((int)intersections.i2.point.x) * 3 + 1] = 0;
-                        picture[((int)intersections.i2.point.y) * pictureWidth * 3 + ((int)intersections.i2.point.x) * 3 + 2] = 0;
+                        setColor(picture, (int)intersections.i2.point.x, (int)intersections.i2.point.y, pictureWidth, lineColor);
                     }
                 }
             }
+        }
+    }
+    return 0;
+}
+
+int voronoiMin(char picture[], int pictureWidth, int pictureHeight, std::vector<Vector2> seeds, Vector2 topLeft, Vector2 bottomRight, Color lineColor = Color(0, 0, 0), Color backgroundColor = Color(255, 255, 255)) // black white picture of the voronoi diagram
+{
+    fillColor(picture, pictureWidth, pictureHeight, backgroundColor);
+    std::vector<Parabular> pars = {}; // list of parabulars
+    for (int sweepY = topLeft.y; sweepY <= bottomRight.y; sweepY++) {
+        pars.clear();
+        pars.shrink_to_fit();
+        for (int i = 0; i < seeds.size(); i++) {
+            if (seeds[i].y >= sweepY) 
+                pars.push_back(Parabular(seeds[i], sweepY));
+        }
+        std::vector<int> minArray = parMin(pars, topLeft.x, bottomRight.x);
+        // now we just need to place black pixels at local min
+        for(int i = 0; i < minArray.size(); i++) {
+            if (i == 0) {
+                if (i == minArray.size() - 1)
+                    break;
+                if (minArray[i + 1] > minArray[i])
+                    setColor(picture, topLeft.x + i, minArray[i], pictureWidth, lineColor);
+            }
+            else if (i == minArray.size() - 1) {
+                if (minArray[i - 1] > minArray[i])
+                    setColor(picture, topLeft.x + i, minArray[i], pictureWidth, lineColor);
+            }
+            else {
+                if (minArray[i - 1] > minArray[i] && minArray[i + 1] > minArray[i])
+                    setColor(picture, topLeft.x + i, minArray[i], pictureWidth, lineColor);
+            }
+            
         }
     }
     return 0;

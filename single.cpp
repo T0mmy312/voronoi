@@ -9,14 +9,13 @@
 int main() {
     const int width = 800;
     const int height = 800;
-    int numOfPoints = 10;
-    int minDistance = 10;
+    int numOfPoints = 100;
+    int minDistance = 0;
 
     std::vector<Vector2> seeds = generateRandPoints(width, height, numOfPoints, minDistance);
-    seeds = wrapPoints(seeds, width, height);
 
     char picture[width * height * 3];
-    colorPartsVoronoi(seeds, picture, width, height, &chebyshevDist);
+    colorPartsVoronoi(seeds, picture, width, height, &eulerDist);
     char* blPic = colorPartsToBL(picture, width, height, Color(0, 0, 0));
     writeImage("singleVoroni.png", blPic, width, height);
 }
