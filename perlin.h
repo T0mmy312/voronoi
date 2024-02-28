@@ -5,19 +5,17 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <functional>
+#include <string>
 #include "vectors.h"
+
+int nthDigitOfPi(int n) // returns the nth digit of pi in hexadecimal
+{
+    
+}
 
 // this is a funktion that just generates pseudo random vectors, but gets the same result for the same value
 double hashCornerToAngle(Vector2 corner) {
-    // Combine x and y into a single value
-    size_t combined = std::hash<double>()(corner.x) ^ std::hash<double>()(corner.y);
-    
-    // Scale the combined hash to the range [0, 2*pi]
-    double scaled = static_cast<double>(combined) / static_cast<double>(std::numeric_limits<size_t>::max());
-    scaled *= 2 * M_PI; // 2 * pi
-    
-    return scaled;
+    return nthDigitOfPi(abs(corner.x - corner.y));
 }
 
 class PerlinNoise2
@@ -32,7 +30,7 @@ public:
     float gridSize;
     int layers;
 
-    double val(Vector2 pos)
+    double val(Vector2 pos) // returns a value between -1 and 1
     {
         double result = 0;
         for (int layer = 0; layer < layers; layer++) 
@@ -45,10 +43,10 @@ public:
             double x1 = x0 + layerGridSize; // top right corner x
             double y1 = y0 + layerGridSize; // top right corner y
 
-            Vector2 s0 = angleToVec(hashCornerToAngle(Vector2(x0, y1)), 1);
-            Vector2 s1 = angleToVec(hashCornerToAngle(Vector2(x1, y1)), 1);
-            Vector2 s2 = angleToVec(hashCornerToAngle(Vector2(x0, y0)), 1);
-            Vector2 s3 = angleToVec(hashCornerToAngle(Vector2(x1, y0)), 1);
+            Vector2 s0 = hashCornerToAngle(Vector2(x0, y1));
+            Vector2 s1 = hashCornerToAngle(Vector2(x1, y1));
+            Vector2 s2 = hashCornerToAngle(Vector2(x0, y0));
+            Vector2 s3 = hashCornerToAngle(Vector2(x1, y0));
 
             Vector2 pd0 = pos - Vector2(x0, y1);
             Vector2 pd1 = pos - Vector2(x1, y1);

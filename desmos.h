@@ -11,6 +11,7 @@
 #define EXPR_START "\tcalculator.setExpression({\n       latex: '"
 #define EXPR_MIDDLE "',\n       id: '"
 #define EXPR_HIDDEN "',\n       hidden: "
+#define EXPR_COLOR ",\n      color: \""
 #define EXPR_END ",\n  });\n"
 
 class DesFile
@@ -20,7 +21,7 @@ private:
 
 public:
     DesFile(const char filename[]) {
-        file = std::ofstream("perlinHashTest.txt");
+        file = std::ofstream(filename);
         file << FILESTART;
         index = 0;
     }
@@ -31,8 +32,12 @@ public:
 
     std::ofstream file;
 
-    void addExpr(std::string latex, bool hidden = false) {
-        file << EXPR_START << latex << EXPR_MIDDLE << index << EXPR_HIDDEN << (hidden ? "true" : "false") << EXPR_END;
+    void addExpr(std::string latex, std::string color = "none", bool hidden = false) {
+        file << EXPR_START << latex << EXPR_MIDDLE << index << EXPR_HIDDEN << (hidden ? "true" : "false");
+        if (color != "none") {
+            file << EXPR_COLOR << color << "\"";
+        }
+        file << EXPR_END;
         index++;
     }
 };

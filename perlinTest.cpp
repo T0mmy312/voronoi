@@ -14,11 +14,11 @@
 int main() {
     DesFile file("perlinHashTest.html");
 
-    for (int y = 0; y < 10; y++) {
-        for (int x = 0; x < 10; x++) {
+    for (int y = 0; y < 25; y++) {
+        for (int x = 0; x < 25; x++) {
             double alpha = hashCornerToAngle(Vector2(x, y));
             Vector2 vec = angleToVec(alpha, 0.5);
-            file.addExpr("X = ("+str(x)+","+str(y)+") + ("+str(vec.x)+","+str(vec.y)+") * t");
+            file.addExpr("X = ("+str(x)+","+str(y)+") + ("+str(vec.x)+","+str(vec.y)+") * t", "black");
         }
     }
 }

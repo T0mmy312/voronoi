@@ -14,24 +14,6 @@
 #endif
 
 //? ----------------------------------------------------------------------------------------------------
-//? Distance calculation funktions
-//? ----------------------------------------------------------------------------------------------------
-
-float eulerDist(Vector2 pos1, Vector2 pos2) {
-    return (pos2 - pos1).magnitude();
-}
-float sqrtAvrDist(Vector2 pos1, Vector2 pos2) {
-    return sqrt(abs(pos2.x - pos1.x)*abs(pos2.y - pos1.y));
-}
-float manhattenDist(Vector2 pos1, Vector2 pos2) {
-    return abs(pos2.x - pos1.x) + abs(pos2.y - pos1.y);
-}
-float chebyshevDist(Vector2 pos1, Vector2 pos2) {
-    Vector2 res = pos2 - pos1;
-    return max(abs(res.x), abs(res.y));
-}
-
-//? ----------------------------------------------------------------------------------------------------
 //? Edge class
 //? ----------------------------------------------------------------------------------------------------
 
@@ -95,6 +77,11 @@ public:
         a = 1 / twoSweepYDifSeedY;
         b = (2 * seed.x) / twoSweepYDifSeedY;
         c = (sweepLineY*sweepLineY - seed.x*seed.x - seed.y*seed.y) / twoSweepYDifSeedY;
+    }
+    Parabular(float k, Vector2 s) {
+        a = k;
+        b = -2 * k * s.x;
+        c = s.x*s.x * k + s.y;
     }
     ~Parabular() {}
 
@@ -275,6 +262,40 @@ std::vector<Vector2> wrapPoints(std::vector<Vector2> seeds, int width, int heigh
         points.push_back(duplicatePoints[i]);
     
     return points;
+}
+
+//? ----------------------------------------------------------------------------------------------------
+//? Distance calculation funktions
+//? ----------------------------------------------------------------------------------------------------
+
+float eulerDist(Vector2 pos1, Vector2 pos2) {
+    return (pos2 - pos1).magnitude();
+}
+float sqrtAvrDist(Vector2 pos1, Vector2 pos2) {
+    return sqrt(abs(pos2.x - pos1.x)*abs(pos2.y - pos1.y));
+}
+float manhattenDist(Vector2 pos1, Vector2 pos2) {
+    return abs(pos2.x - pos1.x) + abs(pos2.y - pos1.y);
+}
+float chebyshevDist(Vector2 pos1, Vector2 pos2) {
+    Vector2 res = pos2 - pos1;
+    return max(abs(res.x), abs(res.y));
+}
+float parabularDist(Vector2 pos1, Vector2 pos2) {
+    Parabular par((pos2.y - pos1.y)/pow(pos2.x - pos1.x, 2), pos1);
+    int neg = 1;
+    if (pos2.x - pos1.x < 0)
+        neg = -1;
+    float sum = 0;
+    float lastY = par.calc(pos1.x);
+    float lastX = pos1.x;
+    for (int x = pos1.x + 0.001 * neg; neg == 1 ? x <= pos2.x : x >= pos2.x; x += 0.001 * neg) {
+        float y = par.calc(x);
+        sum += sqrt(pow(y - lastY, 2) + pow(x - lastX, 2));
+        lastX = x;
+        lastY = y;
+    }
+    return sum;
 }
 
 //? ----------------------------------------------------------------------------------------------------

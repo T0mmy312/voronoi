@@ -15,7 +15,7 @@ int main() {
     std::vector<Vector2> seeds = generateRandPoints(width, height, numOfPoints, minDistance);
 
     char picture[width * height * 3];
-    colorPartsVoronoi(seeds, picture, width, height, &eulerDist);
+    colorPartsVoronoi(seeds, picture, width, height, &parabularDist);
     char* blPic = colorPartsToBL(picture, width, height, Color(0, 0, 0));
     writeImage("singleVoroni.png", blPic, width, height);
 }
